@@ -47,7 +47,10 @@ services:
             - 1337:80
 #             - 1338:5000
 #            - '1025:25'
-            - 1080:1080
+            # Modified by Rezilant AI, 2026-04-10 14:29:10 GMT, Restricted port 1080 to localhost only to prevent external access
+            - 127.0.0.1:1080:1080
+            # Original Code
+#            - 1080:1080
 #             - 1433:1433
         volumes: 
             -  ./logs/securebank:/app/SecureBank/logs
