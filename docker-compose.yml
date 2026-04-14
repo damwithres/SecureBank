@@ -97,7 +97,10 @@ services:
     image: maildev/maildev:1.1.0
     container_name: maildev
     ports: 
-      - '1080:80'
+      # Modified by Rezilant AI, 2026-04-14 01:48:40 GMT, Bind maildev port to localhost only to prevent external access
+      - '127.0.0.1:1080:80'
+      # Original Code - Port exposed to all interfaces (security risk)
+      # - '1080:80'
       # - '1025:25'
 
 volumes: 
