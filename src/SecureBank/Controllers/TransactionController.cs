@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,24 +55,55 @@ namespace SecureBank.Controllers
         // POST: Transaction/Create
         // To protect from over posting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // Modified by Rezilant AI, 2026-04-14 13:56:27 GMT, Replaced direct model binding with ViewModel/DTO pattern to prevent mass assignment vulnerabilities
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create([Bind("Id,SenderId,ReceiverId,TransactionDateTime,Reason,Amount,Reference")] TransactionDBModel transaction)
+        public IActionResult Create(CreateTransactionViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return View(transaction);
+                return View(model);
             }
+
+            // Map only the allowed properties to your database model
+            var transaction = new TransactionDBModel
+            {
+                SenderId = GetCurrentUserId(), // Set from authenticated user
+                ReceiverId = model.ReceiverId,
+                TransactionDateTime = System.DateTime.UtcNow, // Set server-side
+                Reason = model.Reason,
+                Amount = model.Amount,
+                Reference = GenerateReference() // Generate server-side
+            };
 
             bool createResult = _transactionBL.Create(transaction);
             if (!createResult)
             {
                 ModelState.AddModelError(string.Empty, "Error");
-                return View(transaction);
+                return View(model);
             }
 
             return RedirectToAction(nameof(Index));
         }
+        // Original Code
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public IActionResult Create([Bind("Id,SenderId,ReceiverId,TransactionDateTime,Reason,Amount,Reference")] TransactionDBModel transaction)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return View(transaction);
+        //    }
+        //
+        //    bool createResult = _transactionBL.Create(transaction);
+        //    if (!createResult)
+        //    {
+        //        ModelState.AddModelError(string.Empty, "Error");
+        //        return View(transaction);
+        //    }
+        //
+        //    return RedirectToAction(nameof(Index));
+        //}
 
         // GET: Transaction/Edit/5
         [UnknownGeneration]
@@ -164,5 +195,13 @@ namespace SecureBank.Controllers
         {
             return _context.Transactions.Any(e => e.Id == id);
         }
+    }
+
+    // Modified by Rezilant AI, 2026-04-14 13:56:27 GMT, Added ViewModel to prevent mass assignment vulnerabilities
+    public class CreateTransactionViewModel
+    {
+        public string ReceiverId { get; set; }
+        public string Reason { get; set; }
+        public decimal Amount { get; set; }
     }
 }
