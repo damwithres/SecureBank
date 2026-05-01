@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,9 +9,12 @@ using StoreAPI.DAL;
 using StoreAPI.DAL.DBModels;
 using StoreAPI.Models;
 using NLog;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StoreAPI.Controllers
 {
+    // Modified by Rezilant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization to prevent broken access control
+    [Authorize] // Require authentication for all endpoints
     [Produces("application/json")]
     [Route("api/Store/[action]")]
     public class StoreController : Controller
@@ -24,14 +27,18 @@ namespace StoreAPI.Controllers
             _storeContext = storeContext;
         }
 
+        // Modified by Reziliant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization to restrict read access to authenticated users
         [HttpGet]
+        [Authorize(Roles = "User,Admin")]
         public ActionResult GetStoreItems()
         {
             _logger.Trace($"Returned list of store items");
             return new ObjectResult(_storeContext.StoreItems.ToList());
         }
 
+        // Modified by Reziliant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization to restrict store item creation to Admin only
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public ActionResult CreateStoreItem([FromBody] StoreItemTable item)
         {
             _logger.Trace($"New store item added, id: {item.Id}");
@@ -41,7 +48,9 @@ namespace StoreAPI.Controllers
             return new ObjectResult(item);
         }
 
+        // Modified by Rezilant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization to restrict store item editing to Admin only
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> EditStoreItem([FromBody] StoreItemTable item)
         {
             _logger.Trace($"Checking if store item with id {item.Id} exists, so it can be edited.");
@@ -57,7 +66,9 @@ namespace StoreAPI.Controllers
             return new ObjectResult(storeItem);
         }
 
+        // Modified by Rezilant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization to restrict store item editing confirmation to Admin only
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ConfirmEditItem([FromBody] StoreItemTable item)
         {
             var storeItem = await _storeContext.StoreItems.FindAsync(item.Id);
@@ -72,7 +83,9 @@ namespace StoreAPI.Controllers
             return new ObjectResult(storeItem);
         }
 
+        // Modified by Rezilant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization to restrict store item deletion to Admin only
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteItem([FromBody] StoreItemTable item)
         {
             _logger.Trace($"Checking if store item with id {item.Id} exists, so it can be deleted.");
@@ -88,7 +101,9 @@ namespace StoreAPI.Controllers
             return new ObjectResult(storeItem);
         }
 
+        // Modified by Rezilant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization to restrict store item deletion confirmation to Admin only
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ConfirmDeleteItem([FromBody] StoreItemTable item)
         {
             var storeItem = await _storeContext.StoreItems.FindAsync(item.Id);
@@ -99,9 +114,17 @@ namespace StoreAPI.Controllers
             return new ObjectResult(storeItem);
         }
 
+        // Modified by Rezilant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization and horizontal access control to prevent users from checking out for other users
         [HttpPost]
+        [Authorize(Roles = "User,Admin")]
         public ActionResult CheckoutBasket([FromBody] List<PurcahseItemReq> purchases)
         {
+            // Validate that user can only checkout for themselves
+            var currentUser = User.Identity.Name;
+            if (purchases.Any(p => p.Username != currentUser) && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
             foreach (var purchase in purchases)
             {
                 var storeItem = _storeContext.StoreItems
@@ -127,9 +150,17 @@ namespace StoreAPI.Controllers
             return Ok(new EmptyResp());
         }
 
+        // Modified by Rezilant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization and horizontal access control to prevent users from accessing other users' purchase history
         [HttpGet]
+        [Authorize(Roles = "User,Admin")]
         public ActionResult GetAllPurchases([FromQuery] string user)
         {
+            // Add authorization check to prevent users accessing other users' data
+            var currentUser = User.Identity.Name;
+            if (currentUser != user && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
             var purchaseItems = _storeContext.Purchases
                 .Where(purchase => purchase.Username == user)
                 .OrderBy(purchase => purchase.DateTimePurchased)
@@ -152,7 +183,9 @@ namespace StoreAPI.Controllers
             return Ok(purchases);
         }
 
+        // Modified by Rezilant AI, 2026-05-01 18:14:34 GMT, Added role-based authorization to restrict admin-only endpoint to Admin role only
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public ActionResult AdminGetAllPurchases()
         {
             var purchaseItems = _storeContext.Purchases
