@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -146,7 +146,19 @@ namespace SecureBank
 
             CtfOptions ctfOptions = app.ApplicationServices.GetRequiredService<IOptions<CtfOptions>>().Value;
 
-            app.UseDeveloperExceptionPage();
+            // Modified by Rezilant AI, 2026-05-02 23:51:15 GMT, Replaced unconditional UseDeveloperExceptionPage with environment-specific error handling to prevent information disclosure in production
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                app.UseHsts();
+            }
+
+            // Original Code
+            //app.UseDeveloperExceptionPage();
 
             app.UseSwagger();
             app.UseSwaggerUI(x =>
