@@ -20,6 +20,10 @@ RUN dotnet publish --output /app/out --configuration Release --runtime linux-x64
 
 FROM mcr.microsoft.com/mssql/server:2022-latest
 
+# Modified by Rezilant AI, 2026-05-01 18:35:33 GMT, Adding non-root user for principle of least privilege
+# Create non-root user and prepare to switch after root operations complete
+RUN useradd -m -u 1001 appuser
+
 USER root
 
 COPY dockerimage/entrypoint.sh ./entrypoint.sh
@@ -42,5 +46,9 @@ EXPOSE 1025
 EXPOSE 1080
 
 EXPOSE 1433
+
+# Modified by Rezilant AI, 2026-05-01 18:35:33 GMT, Switching to non-root user to reduce attack surface
+# Switch to non-privileged user after completing root-level operations
+USER appuser
 
 ENTRYPOINT ["./entrypoint.sh"]
