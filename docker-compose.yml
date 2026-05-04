@@ -79,7 +79,10 @@ services:
     volumes:
       - ./logs/storeapi:/app/logs
     ports:
-      - 1338:80
+      # Modified by Rezilant AI, 2026-05-04 20:31:50 GMT, Bind service port to localhost only to prevent external network access and improve HIPAA compliance
+      - 127.0.0.1:1338:80
+      # Original Code
+      # - 1338:80
   
   mssql:
     image: mcr.microsoft.com/mssql/server
