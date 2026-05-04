@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -52,13 +52,17 @@ namespace SecureBank.Controllers
             return View();
         }
 
+        // Modified by Rezilant AI, 2026-05-04 20:43:24 GMT, Fixed mass assignment vulnerability by explicitly limiting bindable properties to prevent over-posting attacks
         // POST: Transaction/Create
         // To protect from over posting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create([Bind("Id,SenderId,ReceiverId,TransactionDateTime,Reason,Amount,Reference")] TransactionDBModel transaction)
+        public IActionResult Create([Bind("Reason,Amount")] TransactionDBModel transaction)
         {
+            // Original Code
+            //public IActionResult Create([Bind("Id,SenderId,ReceiverId,TransactionDateTime,Reason,Amount,Reference")] TransactionDBModel transaction)
+            //{
             if (!ModelState.IsValid)
             {
                 return View(transaction);
